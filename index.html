@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <!-- <script src="bootstrap.min.js"></script>
+    <link rel="stylesheet" href="bootstrap.min.css"> -->
+	<script src="jquery.min.js"></script>
+    <script src="lib/codemirror.js"></script>
+    <link rel="stylesheet" href="lib/codemirror.css" />
+    <link rel="stylesheet" href="theme/eclipse.css" />
+    <link rel="stylesheet" href="theme/monokai.css" />
+    <link rel="stylesheet" href="addon/fold/foldgutter.css" />
+    <script src="mode/python/python.js"></script>
+    <script src="addon/fold/foldcode.js"></script>
+    <script src="addon/fold/foldgutter.js"></script>
+    <script src="addon/fold/xml-fold.js"></script>
+    <script src="addon/fold/indent-fold.js"></script>
+    <script src="addon/fold/brace-fold.js"></script>
+    <script src="addon/fold/markdown-fold.js"></script>
+    <script src="addon/fold/comment-fold.js"></script>
+    <script src="addon/selection/active-line.js"></script>
+    <script src="addon/edit/closebrackets.js"></script>
+    <script src="addon/edit/matchbrackets.js"></script>
+    <script src="addon/comment/comment.js"></script>
+    <script src="addon/comment/continuecomment.js"></script>
+    <script src="keymap/sublime.js"></script>
+
+    <script src="skulpt.min.js" type="text/javascript"></script>
+    <script src="skulpt-stdlib.js" type="text/javascript"></script>
+    <style>
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="bootstrap.min.js"></script>
+    <link rel="stylesheet" href="bootstrap.min.css">
+    <script type="text/javascript">
+        function HTMLEncode(html) {
+            var temp = document.createElement("div");
+            (temp.textContent != null) ? (temp.textContent = html) : (temp.innerText = html);
+            var output = temp.innerHTML;
+            temp = null;
+            return output;
+        }
+
+        function HTMLDecode(text) {
+                var temp = document.createElement("div");
+                temp.innerHTML = text;
+                var output = temp.innerText || temp.textContent;
+                temp = null;
+                return output;
+        }
+
+        function chtheme() {
+            var theme = document.getElementById("chtheme");
+            if (theme.innerHTML == "🔆") {
+                theme.innerHTML = "🌙";
+                applyTheme("monokai");
+            } else {
+                theme.innerHTML = "🔆";
+                applyTheme("eclipse");
+            }
+        }
+
+        function getQueryVariable(variable, params) {
+            var query = window.location.search.substring(1);
+            var vars = params.split("&");
+            for (var i = 0; i < vars.length; i++) {
+                var pair = vars[i].split("=");
+                if (pair[0] == variable) { return pair[1]; }
+            }
+            return (false);
+        }
+
+        function applyBanner(banner) {
+            document.getElementById('banner').innerHTML = banner;
+        }
+
+        function applyCode(code) {
+            editor.getDoc().setValue(decodeURIComponent(window.atob(code)));
+            // console.log(decodeURIComponent(window.atob(code)));
+            editor.refresh();
+        }
+
+        function applyAction(action) {
+            if (action == '1') { runit(); }
+            if (action == '2') { download(); }
+            else { eval(action); }
+            // console.log(action);
+        }
+
+        function applyTheme(theme) {
+            var themeico = document.getElementById("chtheme");
+            if (theme == "monokai") {
+                themeico.innerHTML = "🌙";
+            } else {
+                themeico.innerHTML = "🔆";
+            }
+            editor.setOption("theme", theme);
+
+            gTheme = theme;
+            editor.refresh();
+        }
+
+        function saveData(theme) {
+            if (typeof (Storage) != "undefined") {
+                localStorage.setItem("theme", theme);
+                localStorage.setItem("code", window.btoa(encodeURIComponent(editor.getValue())));
+            }
+        }
+
+        function loadData() {
+            if (typeof (Storage) != "undefined") {
+                applyTheme(localStorage.getItem("theme"));
+                applyCode(localStorage.getItem("code"));
+            }
+        }
+
+        function outf(text) {
+            printErrInfo('');
+            var mypre = document.getElementById("output");  //
+            mypre.innerHTML = mypre.innerHTML + HTMLEncode(text);  //文字输出
+        }
+
+        function statusRunning() {
+            var btn = document.getElementById("runCode");
+            btn.disabled = true;
+            btn.setAttribute('class', 'btn btn-warning');
+            btn.innerHTML = "运行中...";
+        }
+
+        function statusSuccess() {
+            var btn = document.getElementById("runCode");
+            btn.disabled = false;
+            btn.setAttribute('class', 'btn btn-success');
+            btn.innerHTML = "运行 <kbd>F5</kbd>";
+        }
+
+        function statusFailed() {
+            var btn = document.getElementById("runCode");
+            btn.disabled = false;
+            btn.setAttribute('class', 'btn btn-danger');
+            btn.innerHTML = "运行 <kbd>F5</kbd>";
+        }
+
+        function printErrInfo(text) {
+            var mypre = document.getElementById("outputErr");  //
+            mypre.innerHTML = "<br />"+text;  //文字输出
+        }
+
+        function download() {
+            var element = document.createElement('a');
+            var text = editor.getValue();
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+            element.setAttribute('download', 'NeglectedGarden.py');
+            element.style.display = 'none';
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+        }
+
+        function dispModal(title, content, act) {
+            var strrand=''+Math.floor(Math.random()*1000);
+            var modalWindow = document.createElement('div');
+            if (title=='0') {
+                strrand=0;
+                modalWindow.innerHTML=content;
+            } else {
+                modalWindow.innerHTML='<div class="modal fade" id="tmpModal'+strrand+'"> <div class="modal-dialog"> <div style="position:relative;width:400px;height:400px;" >  <div class="modal-content"><div class="modal-header"><h4 class="modal-title">'+title+'</h4><button type="button" class="close" data-dismiss="modal">&times;</button></div><div class="modal-body">'+content+'</div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button></div></div></div></div>';
+            }
+            document.body.appendChild(modalWindow);
+            var modalButton = document.createElement('div');
+            modalButton.innerHTML='<button type="button" id="showModal'+strrand+'" class="btn btn-primary" data-toggle="modal" data-target="#tmpModal'+strrand+'"> </button>';
+            document.body.appendChild(modalButton);
+            document.getElementById('showModal'+strrand).click();
+            document.body.removeChild(modalButton);
+        }
+
+        function share(act) {
+            var code = window.btoa(encodeURIComponent(editor.getValue()));
+            var action = getAction(act);
+            var banner = getBanner();
+            var key = window.btoa('code=' + code + '&action=' + encodeURIComponent(action) + '&banner=' + encodeURIComponent(banner));
+            var baseUrlEnd = window.location.href.indexOf('?') < 0 ? window.location.href.length : window.location.href.indexOf('?');
+            var baseUrl = window.location.href.substring(0, baseUrlEnd);
+            var sharedurl = baseUrl + '?key=' + key;
+            copy(sharedurl);
+            alert('链接复制成功');
+        }
+
+        var getBanner = () => {
+            return 'Python3 Corner of Neglected Garden';
+            // Override this function in browser and have fun
+        };
+
+        var getAction = (act) => {
+            if (act != '1' && act != '2') {
+                return '0';
+            }
+            return act;
+            // Override this function in browser and have fun
+        };
+
+        function copy(content) {
+            let transfer = document.createElement('input');
+            document.body.appendChild(transfer);
+            transfer.value = content;
+            transfer.focus();
+            transfer.select();
+            if (document.execCommand('copy')) {
+                document.execCommand('copy');
+            }
+            transfer.blur();
+            document.body.removeChild(transfer);
+
+        }
+
+        function builtinRead(x) {
+            if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][x] === undefined)
+                throw "File not found: '" + x + "'";
+            return Sk.builtinFiles["files"][x];
+        }
+
+        function runit() {
+            statusRunning();
+            // console.log("runit is going");
+            var prog = editor.getValue();
+            
+            var mypre = document.getElementById("output");   //获取输出框
+            mypre.innerHTML = '';
+            Sk.pre = "output";
+            Sk.configure({ output: outf, read: builtinRead, __future__: Sk.python3 });
+
+            (Sk.TurtleGraphics || (Sk.TurtleGraphics = {})).target = 'mycanvas';
+            var myPromise = Sk.misceval.asyncToPromise(function () {
+                // statusRunning();
+                return Sk.importMainWithBody("<stdin>", false, prog, true);
+            });
+
+            myPromise.then(function (mod) {
+                // console.log('success');    //执行成功，显示success
+                statusSuccess();
+            },
+                function (err) {
+                    var mypre = document.getElementById("output");  //
+                    mypre.innerHTML = "";  //文字输出
+                    statusFailed();
+                    printErrInfo(err.toString());
+                });
+        }
+    </script>
+    <div class="container" style="padding-left: 1px; padding-right: 1px; ">
+
+        <div class="py-2 text-center">
+            <h2 id='banner'>Python3 Corner of Neglected Garden</h3>
+                <p class="lead"><small>这是Python3的简易模拟实验平台，Python3的使用指南可以移步<a
+                            href="Guide.html">这里</a>。</small></p>
+        </div>
+        <form>
+            <div class="container-fluid" style="padding-left: 1px; padding-right: 1px; ">
+                <!-- textarea是用户输入代码的部分，在此区域填写代码，每次运行都会显示 -->
+                <textarea id="yourcode" cols="80" rows="10">
+        </div>
+        </textarea><br />
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <button type="button" id="runCode"
+                            style="width:125px;margin-right: 2px;margin-left: 2px;margin-top: 2px;margin-bottom: 2px;"
+                            class="btn btn-success" onclick="runit()">
+                            运行 <kbd>F5</kbd>
+                        </button>
+                        <button type="button" style="width:125px;margin-right: 2px;margin-left: 2px;margin-top: 2px;margin-bottom: 2px;"
+                            class="btn btn-warning" onclick="download()">
+                            保存文件
+                        </button>
+                        <select id="sharelink" style="width:125px;text-align:center;margin-right: 2px;margin-left: 2px;margin-top: 2px;margin-bottom: 2px;"
+                            class="form-select text-center form-control btn btn-primary"
+                            onclick="" onchange="eval(this.value);document.getElementById('sharelink').getElementsByTagName('option')[0].selected = true;">
+                            <option value="share('0')">分享</option>
+                            <option value="share('0')">分享代码</option>
+                            <option value="share('1')">分享运行结果</option>
+                            <option value="share('2')">分享下载链接</option>
+                        </select>
+                        <div id="chtheme" class="btn btn-default  btn-sm" onclick="chtheme()">🔆
+                        </div>
+                    </div>
+                    <div class="col-md-5"></div>
+                </div>
+
+                <!-- </form> -->
+                <p  id="outputErr" style="color:#ee1111"></p>
+                <!-- 文字输出部分 -->
+                <pre><code id="output"></code></pre>
+                <!-- 画图输出部分 -->
+                <div id="mycanvas"></div>
+
+            </div>
+
+            <script type="text/javascript">
+                var gTheme = "eclipse";
+                document.getElementById("yourcode").innerHTML = "print('Welcome to Neglected Garden')\nprint('Welcome to Neglected Garden')";
+                var editor = CodeMirror.fromTextArea(document.getElementById("yourcode"), {
+                    mode: "text/x-python", //实现Java代码高亮
+                    keyMap: 'sublime',
+                    lineNumbers: true,  //显示行号
+                    indentUnit: 4,
+                    tabSize: 4,
+                    showCursorWhenSelecting: true,
+                    styleActiveLine: true,
+                    line: true,
+                    theme: gTheme, //设置主题
+                    lineWrapping: true, //代码折叠
+                    foldGutter: true,
+                    gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+                    matchBrackets: true,  //括号匹配
+                    autoCloseBrackets: true,
+                    showHint: false,
+                    extraKeys: {
+                        "F5": function () {
+                            runit();
+                        }
+                    },
+                    smartIndent: true
+                });
+                editor.setSize('auto','420px');
+                editor.refresh();
+                loadData();
+            </script>
+            <script type="text/javascript">
+
+
+                var params = window.location.search.substring(1);
+                if (params.length != 0) {
+                    try {
+                        var key = window.atob(params.split("=")[1]);
+                        // console.log(key);
+                        var banner = decodeURIComponent(getQueryVariable('banner', key));
+                        // console.log(banner);
+                        var code = getQueryVariable('code', key);
+                        // console.log(code);
+                        var action = decodeURIComponent(getQueryVariable('action', key));
+                        // console.log(action);
+                        if (banner != 'undefined' && banner != 'false') { applyBanner(banner); }
+                        if (code) { applyCode(code); }
+                        if (action != 'undefined' && action != 'false') { applyAction(action); }
+                    } catch (err) {
+                        // console.log(err);
+                        alert("链接错误！");
+                    }
+                }
+                window.onbeforeunload = function () {
+                    saveData(gTheme);
+                    // event.returnValue='确定要离开吗？之前的修改可能会丢失';
+                };
+
+                window.onunload = function () {
+                    saveData(gTheme);
+                    // event.returnValue='确定要离开吗？之前的修改可能会丢失';
+                };
+            </script>
+
+<!-- getAction = (act)=>{
+return "dispModal(\"0\",\"<div class=\\\"modal fade\\\" id=\\\"tmpModal0\\\" onclick=\\\"dispModal('致首位使用者','你好，这里是Python3模拟实验平台，欢迎使用。如果你作为第一名使用者感到荣幸，不如说作为总开发者我更高兴第一次遇见的是你。这是我的第一个版本，后续还会加入诸多功能并调整外观界面，愿陪伴长久。<br /><br />— 魏禹德 敬上')\\\"><div class=\\\"modal-dialog\\\"><div style=\\\"position:relative;width:400px;height:400px;\\\" ><img style=\\\"width:400px;height:400px\\\" src=\\\"envelop.jpg\\\" /><div style=\\\"position:absolute;width:400px;height:100px;left:0;top:0;text-align: center;\\\">这里有一封信，点击打开</div></div></div></div>\");";} -->
+
+</body>
+</html>
