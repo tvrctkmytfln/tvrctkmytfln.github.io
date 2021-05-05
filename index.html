@@ -368,6 +368,42 @@
 
 <!-- getAction = (act)=>{
 return "dispModal(\"0\",\"<div class=\\\"modal fade\\\" id=\\\"tmpModal0\\\" onclick=\\\"dispModal('致首位使用者','你好，这里是Python3模拟实验平台，欢迎使用。如果你作为第一名使用者感到荣幸，不如说作为总开发者我更高兴第一次遇见的是你。这是我的第一个版本，后续还会加入诸多功能并调整外观界面，愿陪伴长久。<br /><br />— 魏禹德 敬上')\\\"><div class=\\\"modal-dialog\\\"><div style=\\\"position:relative;width:400px;height:400px;\\\" ><img style=\\\"width:400px;height:400px\\\" src=\\\"envelop.jpg\\\" /><div style=\\\"position:absolute;width:400px;height:100px;left:0;top:0;text-align: center;\\\">这里有一封信，点击打开</div></div></div></div>\");";} -->
+<!-- 
+<script>
+    function HTMLEncode(html) {
+      var temp = document.createElement("div");
+      (temp.textContent != null) ? (temp.textContent = html) : (temp.innerText = html);
+      var output = temp.innerHTML;
+      temp = null;
+      return output;
+    }
+    function HTMLDecode(text) {
+      var temp = document.createElement("div");
+      temp.innerHTML = text.replace(/\u200B/g,'');
+      var output = temp.innerText || temp.textContent;
+      temp = null;
+      return output;
+    }
+    function runCode(code) {
+      var baseUrl = 'index.html';
+      var url = baseUrl + '?key=' + window.btoa('action=1&code=' + window.btoa(encodeURIComponent(HTMLDecode(HTMLEncode(code).replace(/&nbsp;/g,' ')))));
+      console.log(HTMLDecode(code));
+      window.open(url);
+    }
+    document.querySelectorAll('div.CodeMirror-scroll > div.CodeMirror-sizer').forEach(function (codeBlock) {
+      var button = document.createElement('button')
+      button.className = 'copy-code-button'
+      button.type = 'button'
+      button.innerText = '尝试运行'
+      button.addEventListener('click', function () {
+        runCode(codeBlock.innerText)
+      })
+      var pre = codeBlock.parentNode
+      var highlight = pre.parentNode
+      highlight.appendChild(button)
+    })
+  </script> -->
+
 
 </body>
 </html>
